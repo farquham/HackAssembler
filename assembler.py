@@ -20,6 +20,7 @@ def main():
                 newfile.write(command + "\n")
     newfile.close()
 
+
 # line (string) -> line components (list of strings)
 # unpacks each instruction into its underlying fields pg63
 def parser(currentline):
@@ -90,6 +91,7 @@ def pjump(line):
     except IndexError:
         return ""
 
+
 # (list of string) -> string
 # translates each field into its corresponding binary value
 def code(commands):
@@ -119,6 +121,7 @@ def cjump(jcom):
     jumpdic = {"":"000", "JGT":"001", "JEQ":"010", "JGE":"011",
                "JLT":"100", "JNE":"101", "JLE":"110", "JMP":"111"}
     return jumpdic[jcom]
+
 
 # manages the symbol table
 #def symbol_table():
