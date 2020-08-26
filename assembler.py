@@ -9,7 +9,8 @@ def main():
     file.close()
     nfilename = ((sys.argv[1]).split(".")[0]) + ".hack"
     newfile = open(nfilename, "w")
-    for line in lines: command = parser(line)
+    for line in lines:
+        command = parser(line)
         if command == None:
             continue
         else:
@@ -19,64 +20,66 @@ def main():
                 newfile.write(command + "\n")
     newfile.close()
 
+#binum = bin(int(num)).replace("0b", "")
+#code = ("0" + str(binum))
+#while len(code) <= 15:
+#    code = "0" + code
+#return code
+
 
 # line (string) -> line components (list of strings)
 # unpacks each instruction into its underlying fields pg63
-def parser(currentline):
-    # ignores blank lines
-    if currentline[0] == "\n":
-        return
-    # ignores commented out lines
-    if currentline[0] == "/" and currentline[1] == "/":
-        return
-    # removes any trailing whitespaces and comments
-    currentline = currentline.split()[0]
-    #activates the label handler
-    if commandType(currentline[0]) == ("L"):
-        return
-    # activates the a command parser
-    if commandType(currentline[0]) == ("A"):
-        return symbol(currentline)
-    # activates the c command parsers
-    elif (commandType(currentline[0]) == "C"):
-        command = [pdest(currentline), pcomp(currentline), pjump(currentline)]
-        return command
+#elif (commandType(currentline[0]) == "C"):
+#    command = [pdest(currentline), pcomp(currentline), pjump(currentline)]
+#return command
+
 class Parser:
-    def __init__(self):
-        #!!!
-    def advance():
-        #!!!
+    # initializes the parser and takes in the lines
+    def __init__(self, lines):
+        self.counter = 0
+        self.lines = lines
+        self.line = "Butterfly"
+    # () -> Boolean
+    # checks if the current line is not the final line
+    def hasMoreCommands(self):
+        if  self.line != self.lines[-1]:
+            return true
+        else:
+            return false
+    # __ -> __
+    # advances the parser to the next line and clears whitespace
+    def advance(self):
+        self.line = self.lines[self.counter]
+        self.line = (self.line).strip()
+        self.counter += 1
 
     # string -> string
     # determines what type of command it is based on the first character
-    def commandType(firstd):
-        if firstd == "@":
+    # also identifys comment and blank lines
+    def commandType(self):
+        if ((self.line)[0]) == "@":
             return "A"
-        elif firstd == "(":
+        elif ((self.line)[0]) == "(":
             return "L"
+        elif ((self.line)[0]) == "\n":
+            return "B"
+        elif ((((self.line)[0]) == "/") and (((self.line)[1]) == "/")):
+            return "I"
         else:
             return "C"
 
-
-# string -> string
-# handles the symbol functions for A and L commands
-def symbol(command):
-    num = command.split("@")[1]
-    binum = bin(int(num)).replace("0b", "")
-    code = ("0" + str(binum))
-    while len(code) <= 15:
-        code = "0" + code
-    return code
-    def symbol():
-        pass
-        #!!!
-
+    # string -> string
+    # strips the symbols and returns the decimal/symbol values
+    def symbol(self, CT):
+        num = (self.line).strip("@()")[1]
+        return num
 
     # line (string) -> string
     # C command format: dest=comp;jump
     # parsers a C command to find the destination code
-    def dest():
-        destcode = line.split("=")[0]
+    def dest(self):
+        destcode = (self.line).split("/")[0]
+        destcode = destcode.split("=")[0]
         if len(destcode) > 3:
             return ""
         else:
@@ -84,19 +87,21 @@ def symbol(command):
 
     # line (string) -> string
     # parsers a C command to find the computation code
-    def comp(line):
+    def comp(self):
+        comp = (self.line).split("/")[0]
         try:
-            comp = line.split("=")[1]
+            comp = comp.split("=")[1]
             comp = comp.split(";")[0]
         except IndexError:
-            comp = line.split(";")[0]
+            comp = comp.split(";")[0]
         return comp
 
     # line (string) -> string
     # parsers a C command to find the jump code
-    def jump(line):
+    def jump(self):
+        jump = (self.line).split("/")[0]
         try:
-            return line.split(";")[1]
+            return jump.split(";")[1]
         except IndexError:
             return ""
 
