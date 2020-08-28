@@ -138,13 +138,25 @@ class Code:
 
 class SymbolTable:
     def __init__(self):
-        pass
-    def addEntry(self):
-        pass
-    def contains(self):
-        pass
-    def getAddress(self):
-        pass
+        self.symboltable = {}
+
+    # string int -> __
+    # adds new symbol/address pair to symbol table
+    def addEntry(self, symbol, address):
+        self.symboltable[symbol] = address
+
+    # string -> boolean
+    # checks to see if symbol is present in the table
+    def contains(self, symbol):
+        if symbol in self.symboltable:
+            return true
+        else:
+            return false
+
+    # string -> int
+    # returns the address corresponding to the given symbol
+    def getAddress(self, symbol):
+        return self.symboltable[symbol]
 
 
 if __name__ == "__main__":
