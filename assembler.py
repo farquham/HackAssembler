@@ -1,6 +1,14 @@
 #Assembler program for nand 2 tetris wk6
 import sys
 
+
+#binum = bin(int(num)).replace("0b", "")
+#code = ("0" + str(binum))
+#while len(code) <= 15:
+#    code = "0" + code
+#return code
+
+
 # symbolic code file -> binary code file
 # handles I/O functions
 def main():
@@ -20,18 +28,6 @@ def main():
                 newfile.write(command + "\n")
     newfile.close()
 
-#binum = bin(int(num)).replace("0b", "")
-#code = ("0" + str(binum))
-#while len(code) <= 15:
-#    code = "0" + code
-#return code
-
-
-# line (string) -> line components (list of strings)
-# unpacks each instruction into its underlying fields pg63
-#elif (commandType(currentline[0]) == "C"):
-#    command = [pdest(currentline), pcomp(currentline), pjump(currentline)]
-#return command
 
 class Parser:
     # initializes the parser and takes in the lines
@@ -106,26 +102,23 @@ class Parser:
             return ""
 
 
-# (list of string) -> string
-# translates each field into its corresponding binary value
-def code(commands):
-    translated = ("111" + (ccomp(commands[1])) + (cdest(commands[0])) +
-                  (cjump(commands[2])))
-    return translated
 class Code:
-    def __init__(self):
-        pass
+    # initializes the code translator and imports the mnemonics
+    def __init__(self, destm, compm, jumpm):
+        self.destm = destm
+        self.compm = compm
+        self.jumpm = jumpm
 
     # string -> binary
     # translates the dest mnemonic to binary
-    def dest(dcom):
+    def dest(self):
         destdic = {"":"000", "M":"001", "D":"010", "MD":"011",
                "A":"100", "AM":"101", "AD":"110", "AMD":"111"}
-        return destdic[dcom]
+        return destdic[self.destm]
 
     # string -> binary
     # translates the comp mnemonic to binary
-    def comp(ccom):
+    def comp(self):
         compdic = {"0":"0101010", "1":"0111111", "-1":"0111010", "D":"0001100",
                "A":"0110000", "!D":"0001101", "!A":"0110001", "-D":"0001111",
                "-A":"0110011", "D+1":"0011111", "A+1":"0110111", "D-1":"0001110",
@@ -133,24 +126,24 @@ class Code:
                "D&A":"0000000", "D|A":"0010101", "M":"1110000", "!M":"1110001",
                "-M":"1110011", "M+1":"1110111", "M-1":"1110010", "D+M":"1000010",
                "D-M":"1010011", "M-D":"1000111", "D&M":"1000000", "D|M":"1010101"}
-        return compdic[ccom]
+        return compdic[self.compm]
 
     # string -> binary
     # translates the jump mnemonic to binary
-    def jump(jcom):
+    def jump(self):
         jumpdic = {"":"000", "JGT":"001", "JEQ":"010", "JGE":"011",
                "JLT":"100", "JNE":"101", "JLE":"110", "JMP":"111"}
-        return jumpdic[jcom]
+        return jumpdic[self.jumpm]
 
 
 class SymbolTable:
     def __init__(self):
         pass
-    def addEntry():
+    def addEntry(self):
         pass
-    def contains():
+    def contains(self):
         pass
-    def getAddress():
+    def getAddress(self):
         pass
 
 
