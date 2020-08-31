@@ -2,7 +2,7 @@
 import sys
 
 
-predef_symbols = {"RO":0, "R1":1, "R2":2, "R3":3, "R4":4, "R5":5,
+predef_symbols = {"R0":0, "R1":1, "R2":2, "R3":3, "R4":4, "R5":5,
                   "R6":6, "R7":7, "R8":8, "R9":9, "R10":10, "R11":11,
                   "R12":12, "R13":13, "R14":14, "R15":15, "SCREEN":16384,
                   "KBD":24576, "SP":0, "LCL":1, "ARG":2, "THIS":3, "THAT":4}
@@ -10,64 +10,83 @@ predef_symbols = {"RO":0, "R1":1, "R2":2, "R3":3, "R4":4, "R5":5,
 # symbolic code file -> binary code file
 # handles I/O functions
 def main():
+    # sets up the symbol table and loads the predefined symbols
     st = SymbolTable()
     for x in predef_symbols:
         st.addEntry(x, predef_symbols[x])
 
+    # loads the file to be read and initializes the parser object
     file = open(sys.argv[1], 'r')
     lines = file.readlines()
     file.close()
     p = Parser(lines)
 
+    # does the first pass of the code recording any labels (skipping other
+    # lines)
     c = 0
     for x in lines:
-        if p.commandType() == ("B" or "I"):
+        if (p.commandType() == "B") or (p.commandType() == "I"):
             if p.hasMoreCommands():
                 p.advance()
-            continue
-        if p.commandType() == ("A" or "C"):
+        elif (p.commandType() == "A") or (p.commandType() == "C"):
             c += 1
             if p.hasMoreCommands():
                 p.advance()
-            continue
         else:
-            c += 1
-            st.addEntry(p.symbol(), c)
+            st.addEntry((p.symbol())[0], c)
             if p.hasMoreCommands():
                 p.advance()
-            continue
 
+    # initializes the parser and code objects for use
+    pp = Parser(lines)
     n = 16
-    c = Code()
+    cod = Code()
     bilines = []
     for x in lines:
+        CT = pp.commandType()
         biline = ""
-        if p.commandType() == ("B" or "I" or "L"):
-            if p.hasMoreCommands():
-                p.advance()
-            continue
-        if p.commandType() == "A":
-            sym = p.symbol()
-            if type(sym) !=  "int":
-                if sym in st.symboltable:
-                    biline = c.acomp(st.getAddress(sym))
+        # skips any line that isnt a Acom of Ccom
+        if ((CT == "B") or (CT == "I") or (CT  == "L")):
+            if pp.hasMoreCommands():
+                pp.advance()
+        # if its a Acom handles checks if its a symbol or an int
+        elif (CT == "A"):
+            sym = pp.symbol()
+            # if its a symbol checks the table for it and uses that value
+            if sym[1] == "S":
+                if sym[0] in st.symboltable:
+                    biline = cod.acomp(st.getAddress(sym[0]))
+                # or uses the current n if its not yet in the symbol table
                 else:
-                    st.addEntry(sym, n)
-                    biline = c.acomp(n)
+                    st.addEntry(sym[0], n)
+                    biline = cod.acomp(n)
                     n += 1
+            # if its a int then directly translates the Acom
             else:
-                biline = c.acomp(int(sym))
-            if p.hasMoreCommands():
-                p.advance()
-        if p.commandType() == "C":
-            # !!!
-    bilines.append(biline)
+                biline = cod.acomp(sym[0])
+            if pp.hasMoreCommands():
+                pp.advance()
+        # if its a Ccom first parses the command and then translates it
+        elif (CT == "C"):
+            c = pp.comp()
+            d = pp.dest()
+            j = pp.jump()
+            cc = cod.comp(c)
+            dd = cod.dest(d)
+            jj = cod.jump(j)
+            biline = "111" + cc + dd + jj
+            if pp.hasMoreCommands():
+                pp.advance(
+        # records this lines translation
+        if not biline == "":
+            bilines.append(biline)
 
-
-   # nfilename = ((sys.argv[1]).split(".")[0]) + ".hack"
-   # newfile = open(nfilename, "w")
-   #             newfile.write(code(command) + "\n")
-   # newfile.close()
+    # records all the translated lines into the output file
+    nfilename = ((sys.argv[1]).split(".")[0]) + ".hack"
+    newfile = open(nfilename, "w")
+    for x in bilines:
+        newfile.write(x + "\n")
+    newfile.close()
 
 
 class Parser:
@@ -75,41 +94,56 @@ class Parser:
     def __init__(self, lines):
         self.counter = 0
         self.lines = lines
-        self.line = "Butterfly"
+        self.line = ""
+        self.last = ((self.lines)[-1]).strip()
     # () -> Boolean
     # checks if the current line is not the final line
     def hasMoreCommands(self):
-        if  self.line != self.lines[-1]:
-            return true
+        if  (self.line == self.last) and (self.counter >= (len(self.lines)-1)):
+            return False
         else:
-            return false
+            return True
+
+    def export(self):
+        return self.line
+
     # __ -> __
     # advances the parser to the next line and clears whitespace
     def advance(self):
-        self.line = self.lines[self.counter]
-        self.line = (self.line).strip()
         self.counter += 1
+        self.line = (self.lines)[self.counter]
+        self.line = (self.line).strip()
 
     # string -> string
     # determines what type of command it is based on the first character
     # also identifys comment and blank lines
     def commandType(self):
-        if ((self.line)[0]) == "@":
-            return "A"
-        elif ((self.line)[0]) == "(":
-            return "L"
-        elif ((self.line)[0]) == "\n":
+        try:
+            fd = (self.line)[0]
+        except IndexError:
+            fd = self.line
+        if fd == "":
             return "B"
-        elif ((((self.line)[0]) == "/") and (((self.line)[1]) == "/")):
+        elif ((fd == "/") and (((self.line)[1]) == "/")):
             return "I"
+        elif fd == "@":
+            return "A"
+        elif fd == "(":
+            return "L"
         else:
             return "C"
 
     # string -> string
     # strips the symbols and returns the decimal/symbol values
     def symbol(self):
-        num = (self.line).strip("@()")[1]
-        return num
+        num = (self.line).strip("@() ")
+        try:
+            num = int(num)
+            typ = "I"
+        except ValueError:
+            num = num
+            typ = "S"
+        return num, typ
 
     # line (string) -> string
     # C command format: dest=comp;jump
@@ -146,18 +180,20 @@ class Parser:
 class Code:
     # initializes the code translator and imports the mnemonics
     def __init__(self):
-        self.code = "hello"
+        self.code = ""
 
     # string -> binary
     # translates the dest mnemonic to binary
     def dest(self, destm):
+        sym = destm.strip("\n ")
         destdic = {"":"000", "M":"001", "D":"010", "MD":"011",
                "A":"100", "AM":"101", "AD":"110", "AMD":"111"}
-        return destdic[destm]
+        return destdic[sym]
 
     # string -> binary
     # translates the comp mnemonic to binary
     def comp(self, compm):
+        sym = compm.strip("\n ")
         compdic = {"0":"0101010", "1":"0111111", "-1":"0111010", "D":"0001100",
                "A":"0110000", "!D":"0001101", "!A":"0110001", "-D":"0001111",
                "-A":"0110011", "D+1":"0011111", "A+1":"0110111", "D-1":"0001110",
@@ -165,14 +201,15 @@ class Code:
                "D&A":"0000000", "D|A":"0010101", "M":"1110000", "!M":"1110001",
                "-M":"1110011", "M+1":"1110111", "M-1":"1110010", "D+M":"1000010",
                "D-M":"1010011", "M-D":"1000111", "D&M":"1000000", "D|M":"1010101"}
-        return compdic[compm]
+        return compdic[sym]
 
     # string -> binary
     # translates the jump mnemonic to binary
     def jump(self, jumpm):
+        sym = jumpm.strip("\n ")
         jumpdic = {"":"000", "JGT":"001", "JEQ":"010", "JGE":"011",
                "JLT":"100", "JNE":"101", "JLE":"110", "JMP":"111"}
-        return jumpdic[self.jumpm]
+        return jumpdic[sym]
 
     # string -> binary
     # translates A commands to binary
